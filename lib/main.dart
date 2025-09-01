@@ -4,6 +4,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'collab_drawing_screen.dart';
 import 'bloc/drawing_bloc.dart';
 
+// Minor code improvements
+
 const supabaseUrl = 'https://jzzdjlzpoaapavehwbwz.supabase.co';
 
 Future<void> main() async {
