@@ -5,6 +5,7 @@ import 'collab_drawing_screen.dart';
 import 'bloc/drawing_bloc.dart';
 
 // Minor code improvements
+// Code cleanup
 
 const supabaseUrl = 'https://jzzdjlzpoaapavehwbwz.supabase.co';
 
