@@ -10,6 +10,7 @@ import 'bloc/drawing_bloc.dart';
 const supabaseUrl = 'https://jzzdjlzpoaapavehwbwz.supabase.co';
 
 Future<void> main() async {
+  // Initialization
   WidgetsFlutterBinding.ensureInitialized();
   await Supabase.initialize(
     url: supabaseUrl,
