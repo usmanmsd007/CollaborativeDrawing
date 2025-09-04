@@ -20,6 +20,8 @@ Future<void> main() async {
   runApp(const MyApp());
 }
 
+// App entry point
+
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
