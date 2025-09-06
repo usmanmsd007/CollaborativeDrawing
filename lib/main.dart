@@ -26,7 +26,7 @@ class MyApp extends StatelessWidget {
   const MyApp({super.key}); // Constructor
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context) { // Build method
     return BlocProvider(
       create: (_) => DrawingBloc(),
       child: MaterialApp(
