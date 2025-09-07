@@ -28,6 +28,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) { // Build method
     return BlocProvider(
+      // Bloc provider setup
       create: (_) => DrawingBloc(),
       child: MaterialApp(
         title: 'Collaborative Drawing',
