@@ -31,6 +31,7 @@ class MyApp extends StatelessWidget {
       // Bloc provider setup
       create: (_) => DrawingBloc(),
       child: MaterialApp(
+        // Material app configuration
         title: 'Collaborative Drawing',
         theme: ThemeData(
           colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue),
