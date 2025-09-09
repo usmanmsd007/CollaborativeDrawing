@@ -34,6 +34,7 @@ class MyApp extends StatelessWidget {
         // Material app configuration
         title: 'Collaborative Drawing',
         theme: ThemeData(
+          // Theme configuration
           colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue),
           useMaterial3: true,
         ),
