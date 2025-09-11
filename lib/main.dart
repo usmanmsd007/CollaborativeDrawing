@@ -6,6 +6,7 @@ import 'bloc/drawing_bloc.dart';
 
 // Minor code improvements
 // Code cleanup
+// Code maintenance
 
 const supabaseUrl = 'https://jzzdjlzpoaapavehwbwz.supabase.co';
 
