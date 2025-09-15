@@ -26,6 +26,7 @@ Future<void> main() async {
 }
 
 // App entry point
+// App class definition
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key}); // Constructor
