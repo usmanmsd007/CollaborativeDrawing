@@ -31,6 +31,7 @@ Future<void> main() async {
 class MyApp extends StatelessWidget {
   const MyApp({super.key}); // Constructor
 
+  // Override method
   @override
   Widget build(BuildContext context) { // Build method
     return BlocProvider(
