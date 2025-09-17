@@ -37,6 +37,7 @@ class MyApp extends StatelessWidget {
     return BlocProvider(
       // Bloc provider setup
       create: (_) => DrawingBloc(),
+      // Material app child
       child: MaterialApp(
         // Material app configuration
         title: 'Collaborative Drawing',
