@@ -45,6 +45,7 @@ class MyApp extends StatelessWidget {
         theme: ThemeData(
           // Theme configuration
           colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue),
+          // Material 3 enabled
           useMaterial3: true,
         ),
         // Home screen
