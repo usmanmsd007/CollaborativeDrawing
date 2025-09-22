@@ -16,6 +16,7 @@ const supabaseUrl = 'https://jzzdjlzpoaapavehwbwz.supabase.co';
 Future<void> main() async {
   // Initialization
   WidgetsFlutterBinding.ensureInitialized();
+  // Supabase setup
   await Supabase.initialize(
     // Supabase initialization
     url: supabaseUrl,
