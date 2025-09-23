@@ -20,6 +20,7 @@ Future<void> main() async {
   await Supabase.initialize(
     // Supabase initialization
     url: supabaseUrl,
+    // Anon key
     anonKey:
         'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp6emRqbHpwb2FhcGF2ZWh3Ynd6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjE2NzMwMzQsImV4cCI6MjA3NzI0OTAzNH0.SwyfLsHcPDeLOlTC7DDCMeQF_hOTX9Msf0zznp5FJD4',
   );
