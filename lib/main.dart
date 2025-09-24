@@ -36,6 +36,7 @@ class MyApp extends StatelessWidget {
   // Override method
   @override
   Widget build(BuildContext context) { // Build method
+    // Return widget
     return BlocProvider(
       // Bloc provider setup
       create: (_) => DrawingBloc(),
