@@ -30,6 +30,7 @@ Future<void> main() async {
 
 // App entry point
 // App class definition
+// Stateless widget
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key}); // Constructor
