@@ -15,6 +15,7 @@ import 'bloc/drawing_bloc.dart';
 const supabaseUrl = 'https://jzzdjlzpoaapavehwbwz.supabase.co';
 
 // Main function
+// Function definitions
 Future<void> main() async {
   // Initialization
   WidgetsFlutterBinding.ensureInitialized();
