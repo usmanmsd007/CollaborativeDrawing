@@ -1,11 +1,11 @@
 import 'dart:async';
+import 'dart:math';
 
 import 'package:flutter/material.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:uuid/uuid.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-
-import '../../../../bloc/drawing_bloc.dart';
-import '../../presentation/painters/strokes_painter.dart';
-import '../../data/realtime/drawing_realtime_service.dart';
+import 'bloc/drawing_bloc.dart';
 
 class CollaborativeDrawingScreen extends StatefulWidget {
   const CollaborativeDrawingScreen({super.key});
@@ -17,7 +17,9 @@ class CollaborativeDrawingScreen extends StatefulWidget {
 
 class _CollaborativeDrawingScreenState
     extends State<CollaborativeDrawingScreen> {
-  late final DrawingRealtimeService _realtime;
+  // We keep networking here but state is managed by DrawingBloc
+  late final RealtimeChannel _channel;
+  final String _clientId = const Uuid().v4();
 
   // Throttle broadcast
   Timer? _throttleTimer;
@@ -28,20 +30,55 @@ class _CollaborativeDrawingScreenState
   @override
   void initState() {
     super.initState();
-    _realtime = DrawingRealtimeService();
-    _realtime.subscribe(
-      onStroke:
-          (stroke) =>
-              context.read<DrawingBloc>().add(RemoteStrokeEvent(stroke)),
-      onClear: () => context.read<DrawingBloc>().add(RemoteClearEvent()),
-      canvasSize: _canvasSize,
+    _channel = Supabase.instance.client.channel('room:draw');
+
+    _channel.onBroadcast(
+      event: 'stroke',
+      callback: (dynamic payload, [String? ref]) {
+        if (payload is! Map) return;
+        final senderId = payload['senderId'] as String?;
+        if (senderId == _clientId) return; // Ignore own events
+
+        final colorVal = payload['color'] as int? ?? Colors.blue.value;
+        final width = (payload['width'] as num?)?.toDouble() ?? 4.0;
+        final List<dynamic> points =
+            (payload['points'] as List<dynamic>? ?? <dynamic>[]);
+        final List<Offset> decoded = <Offset>[];
+        final double w = (_canvasSize?.width ?? 1).toDouble();
+        final double h = (_canvasSize?.height ?? 1).toDouble();
+        for (final dynamic p in points) {
+          if (p is Map) {
+            final dx = (p['x'] as num).toDouble() * w;
+            final dy = (p['y'] as num).toDouble() * h;
+            decoded.add(Offset(dx, dy));
+          }
+        }
+        if (decoded.isEmpty) return;
+        // dispatch to bloc
+        final stroke = Stroke(
+          color: Color(colorVal),
+          width: width,
+          points: decoded,
+        );
+        context.read<DrawingBloc>().add(RemoteStrokeEvent(stroke));
+      },
     );
+
+    _channel.onBroadcast(
+      event: 'clear',
+      callback: (dynamic payload, [String? ref]) {
+        // If we ever need to ignore own clear, we can check senderId here.
+        context.read<DrawingBloc>().add(RemoteClearEvent());
+      },
+    );
+
+    _channel.subscribe();
   }
 
   @override
   void dispose() {
     _throttleTimer?.cancel();
-    _realtime.dispose();
+    _channel.unsubscribe();
     super.dispose();
   }
 
@@ -76,34 +113,27 @@ class _CollaborativeDrawingScreenState
     final state = context.read<DrawingBloc>().state;
     final current = state.currentStroke;
     if (current == null || _canvasSize == null) return;
-    _realtime.sendStroke(current, _canvasSize!);
+    final payload = _encodeStroke(current, _canvasSize!);
+    _channel.sendBroadcastMessage(event: 'stroke', payload: payload);
+  }
+
+  Map<String, dynamic> _encodeStroke(Stroke stroke, Size size) {
+    final double w = max(1, size.width);
+    final double h = max(1, size.height);
+    return <String, dynamic>{
+      'senderId': _clientId,
+      'color': stroke.color.value,
+      'width': stroke.width,
+      'points':
+          stroke.points
+              .map((Offset o) => <String, double>{'x': o.dx / w, 'y': o.dy / h})
+              .toList(),
+    };
   }
 
   void _clearCanvas() {
     context.read<DrawingBloc>().add(ClearEvent());
     _sendClearEverywhere();
-  }
-
-  Future<void> _sendClearEverywhere() async {
-    _realtime.sendClear();
-    await _realtime.bestEffortDeleteStrokesTable();
-  }
-
-  PopupMenuItem<Color> _colorItem(Color color, String label) {
-    return PopupMenuItem<Color>(
-      value: color,
-      child: Row(
-        children: <Widget>[
-          Container(
-            width: 16,
-            height: 16,
-            decoration: BoxDecoration(color: color, shape: BoxShape.circle),
-          ),
-          const SizedBox(width: 12),
-          Text(label),
-        ],
-      ),
-    );
   }
 
   @override
@@ -168,7 +198,7 @@ class _CollaborativeDrawingScreenState
                 onPanUpdate: _onPanUpdate,
                 onPanEnd: _onPanEnd,
                 child: CustomPaint(
-                  painter: StrokesPainter(state.strokes),
+                  painter: _StrokesPainter(state.strokes),
                   size: Size.infinite,
                 ),
               );
@@ -177,5 +207,69 @@ class _CollaborativeDrawingScreenState
         );
       },
     );
+  }
+
+  Future<void> _sendClearEverywhere() async {
+    // Notify other clients
+    _channel.sendBroadcastMessage(
+      event: 'clear',
+      payload: <String, dynamic>{'senderId': _clientId},
+    );
+
+    // Best-effort DB wipe if a strokes table exists; ignore if not configured
+    try {
+      await Supabase.instance.client.from('strokes').delete();
+    } catch (_) {
+      // No-op if table doesn't exist or delete is not permitted
+    }
+  }
+
+  PopupMenuItem<Color> _colorItem(Color color, String label) {
+    return PopupMenuItem<Color>(
+      value: color,
+      child: Row(
+        children: <Widget>[
+          Container(
+            width: 16,
+            height: 16,
+            decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+          ),
+          const SizedBox(width: 12),
+          Text(label),
+        ],
+      ),
+    );
+  }
+}
+
+class _StrokesPainter extends CustomPainter {
+  _StrokesPainter(this.strokes);
+  final List<Stroke> strokes;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    for (final Stroke stroke in strokes) {
+      if (stroke.points.length < 2) continue;
+      final paint =
+          Paint()
+            ..color = stroke.color
+            ..strokeWidth = stroke.width
+            ..style = PaintingStyle.stroke
+            ..strokeCap = StrokeCap.round
+            ..strokeJoin = StrokeJoin.round
+            ..isAntiAlias = true;
+
+      final path =
+          Path()..moveTo(stroke.points.first.dx, stroke.points.first.dy);
+      for (int i = 1; i < stroke.points.length; i++) {
+        path.lineTo(stroke.points[i].dx, stroke.points[i].dy);
+      }
+      canvas.drawPath(path, paint);
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant _StrokesPainter oldDelegate) {
+    return oldDelegate.strokes != strokes;
   }
 }

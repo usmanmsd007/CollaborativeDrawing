@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'features/collab_drawing/presentation/screens/collaborative_drawing_screen.dart';
+import 'collab_drawing_screen.dart';
 import 'bloc/drawing_bloc.dart';
 
 const supabaseUrl = 'https://jzzdjlzpoaapavehwbwz.supabase.co';
